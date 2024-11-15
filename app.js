@@ -83,8 +83,8 @@ const dbPool = require('mysql').createPool(db);
 //     console.log('Server started. port 3000.');
 // });
 
-const server = app.listen(80, () => {
-    console.log('Server started. port 80.');
+const server = app.listen(3000, () => {
+    console.log('Server started. port 3000.');
 });
 
 let sql = require('./sql.js');
