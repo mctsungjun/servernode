@@ -59,7 +59,8 @@ app.use(session({
 //         maxAge: 1000 * 60 * 60 // 1시간
 //       }
 }));
-
+// 이미지를 서버에서 제공하려면 Express에서 정적 파일 경로를 설정해야 합니다
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
 // 바디로 요청할때 웹서버에서 받을려면 
 app.use(express.json({
     limit: '5mb'
@@ -152,7 +153,7 @@ app.post('/upload/:productId/:type/:fileName', async (request, res) => {
     } = request.params;
     console.log("filename",fileName)
     const filepath = `${__dirname}/uploads/${productId}/${fileName}`;
-    res.header('Content-Type', `image/${fileName.substring(fileName.lastIndexOf(".")+1)}`);
+    res.header('Content-Type', `image/${fileName.substring(fileName.lastIndexOf("."))}`);
     if (!fs.existsSync(filepath)) res.send(404, {
       error: 'Can not found file.'
     });
