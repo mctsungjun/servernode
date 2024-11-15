@@ -14,7 +14,7 @@ const cors = require('cors');
 
 // 배포시
 let corsOption = {
-    origin: 'https://web-vuedepoytest-m3cudz5w505940d1.sel4.cloudtype.app', // Vue 앱이 배포된 주소
+    origin: '*', // Vue 앱이 배포된 주소
     credentials: true, // 쿠키 등을 포함하려면 true로 설정
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // 허용할 HTTP 메서드
     allowedHeaders: ['Content-Type', 'Authorization'], // 허용할 요청 헤더
