@@ -59,8 +59,8 @@ app.use(session({
 //         maxAge: 1000 * 60 * 60 // 1시간
 //       }
 }));
-// 이미지를 서버에서 제공하려면 Express에서 정적 파일 경로를 설정해야 합니다
-// app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
+//이미지를 서버에서 제공하려면 Express에서 정적 파일 경로를 설정해야 합니다
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
 // 바디로 요청할때 웹서버에서 받을려면 
 app.use(express.json({
     limit: '5mb'
