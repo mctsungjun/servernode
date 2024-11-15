@@ -20,7 +20,20 @@ let corsOption = {
     allowedHeaders: ['Content-Type', 'Authorization'], // 허용할 요청 헤더
     optionsSuccessStatus: 200
   };
-
+  const allowedOrigins = [
+    'https://web-vuedepoytest-m3cudz5w505940d1.sel4.cloudtype.app', // 현재 프론트엔드 도메인
+    'https://web-vuenode-m3cudz5w505940d1.sel4.cloudtype.app' // 추가 도메인
+  ];
+  
+  app.use(cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  }));
   // app.use((req, res, next) => {
   //   res.header('Access-Control-Allow-Origin', 'https://web-vuenode-m3cudz5w505940d1.sel4.cloudtype.app');  // 허용할 출처
   //   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');  // 허용할 헤더
