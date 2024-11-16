@@ -168,7 +168,7 @@ app.post('/upload/:productId/:type/:fileName', async (request, res) => {
 
     // 파일 경로 생성
     const filepath = path.join(__dirname, 'uploads', productId, fileName);
-
+    console.log("filepath", filepath);
     // 파일 존재 여부 확인
     if (!fs.existsSync(filepath)) {
         return res.status(404).json({
@@ -205,7 +205,20 @@ app.post('/api/logout', (request, res) =>{
 app.post('/api/:alias', async (request, res) => {
     try{
         res.send(await req.db(request.params.alias, request.body.param)); // alias: sql.js에서 키값 , post방식의 파라미터 전달받는형식  request.body.param
-
+        if (request.params.alias === "imageDelete") {
+          let{
+            productId,
+            fileName
+          } = request.body.param;
+          const dir = `${__dirname}/uploads/${productId}`;
+          const file = `${dir}/${fileName}`;
+         fs.unlink(file, (err) => {
+          if (err){
+            console.error(`파일 삭제 중 오류 발생:${err.message}`);
+          }
+          console.log('파일이 성공적으로 삭제되었습니다.');
+         });
+        }
     } catch(err) {
         res.status(500).send({
             error:err

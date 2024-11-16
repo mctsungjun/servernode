@@ -45,6 +45,9 @@ module.exports = {
     },
     categoryList: {
         query: `select * from t_category;`
+    },
+    imageDelete: {
+        query: `delete from t_image where product_id=? and p_type;`
     }
 
 }
