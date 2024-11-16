@@ -210,6 +210,8 @@ app.post('/api/:alias', async (request, res) => {
             productId,
             fileName
           } = request.body.param;
+          console.log("productId",productId);
+          console.log("fileName",fileName);
           const dir = `${__dirname}/uploads/${productId}`;
           const file = `${dir}/${fileName}`;
          fs.unlink(file, (err) => {
