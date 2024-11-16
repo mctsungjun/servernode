@@ -175,7 +175,11 @@ app.post('/upload/:productId/:type/:fileName', async (request, res) => {
             error: 'Cannot find file.'
         });
     }
-
+    // 캐싱 비활성화 헤더 추가
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');        
     // 파일 확장자로 MIME 타입 설정
     const fileExt = path.extname(fileName).substring(1); // 확장자 추출
     const mimeType = `image/${fileExt}`;
