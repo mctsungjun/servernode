@@ -206,10 +206,16 @@ app.post('/api/:alias', async (request, res) => {
     try{
         res.send(await req.db(request.params.alias, request.body.param)); // alias: sql.js에서 키값 , post방식의 파라미터 전달받는형식  request.body.param
         if (request.params.alias === "imageDelete") {
-          let[
+           // 데이터 유효성 검증
+           const param = request.body.param;
+           if (!Array.isArray(param) || param.length !== 2) {
+               console.error("Invalid parameters for imageDelete");
+               return;
+           }
+          const[
             productId,
             fileName
-           ] = request.body.param;
+           ] = param;
           console.log("productId",productId);
           console.log("fileName",fileName);
           const dir = `${__dirname}/uploads/${productId}`;
