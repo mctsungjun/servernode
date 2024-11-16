@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const session = require('express-session');
 const fs = require('fs');
-
+const path = require('path');
 
 const cors = require('cors');
 //로컬설정
@@ -22,7 +22,7 @@ let corsOption = {
   };
   const allowedOrigins = [
     'https://web-vuedepoytest-m3cudz5w505940d1.sel4.cloudtype.app', // 현재 프론트엔드 도메인
-    'https://web-vuenode-m3cudz5w505940d1.sel4.cloudtype.app' // 추가 도메인
+    
   ];
   
   app.use(cors({
@@ -60,7 +60,7 @@ app.use(session({
 //       }
 }));
 //이미지를 서버에서 제공하려면 Express에서 정적 파일 경로를 설정해야 합니다
-// app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
 // 바디로 요청할때 웹서버에서 받을려면 
 app.use(express.json({
     limit: '5mb'
@@ -145,20 +145,48 @@ app.post('/upload/:productId/:type/:fileName', async (request, res) => {
     });
   });
   
+  // app.get('/download/:productId/:fileName', (request, res) => {
+  //   const {
+  //     productId,
+  //     type,
+  //     fileName
+  //   } = request.params;
+  //   console.log("filename",fileName)
+  //   const filepath = `${__dirname}/uploads/${productId}/${fileName}`;
+  //   res.header('Content-Type', `image/${fileName.substring(fileName.lastIndexOf("."))}`);
+  //   if (!fs.existsSync(filepath)) res.send(404, {
+  //     error: 'Can not found file.'
+  //   });
+  //   else fs.createReadStream(filepath).pipe(res);
+  // });
+
+
+  //코드 개선
   app.get('/download/:productId/:fileName', (request, res) => {
-    const {
-      productId,
-      type,
-      fileName
-    } = request.params;
-    console.log("filename",fileName)
-    const filepath = `${__dirname}/uploads/${productId}/${fileName}`;
-    res.header('Content-Type', `image/${fileName.substring(fileName.lastIndexOf("."))}`);
-    if (!fs.existsSync(filepath)) res.send(404, {
-      error: 'Can not found file.'
-    });
-    else fs.createReadStream(filepath).pipe(res);
-  });
+    const { productId, fileName } = request.params;
+    console.log("filename:", fileName);
+
+    // 파일 경로 생성
+    const filepath = path.join(__dirname, 'uploads', productId, fileName);
+
+    // 파일 존재 여부 확인
+    if (!fs.existsSync(filepath)) {
+        return res.status(404).json({
+            error: 'Cannot find file.'
+        });
+    }
+
+    // 파일 확장자로 MIME 타입 설정
+    const fileExt = path.extname(fileName).substring(1); // 확장자 추출
+    const mimeType = `image/${fileExt}`;
+
+    // 적절한 Content-Type 설정
+    res.setHeader('Content-Type', mimeType);
+
+    // 파일 스트리밍으로 응답
+    fs.createReadStream(filepath).pipe(res);
+});
+
 
 app.post('/api/logout', (request, res) =>{
     request.session.destroy((err) =>{
