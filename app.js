@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const session = require('express-session');
+const nodemailer = require ( "nodemailer" );
 const fs = require('fs');
 const path = require('path');
 
@@ -246,6 +247,47 @@ app.post('/apirole/:alias', async (request, res) => {
             error:err
         })
     }
+});
+
+//gmail로 메일보내기
+app.post('/send-email', async(req,res)=>{
+
+  
+  let param = req.body.param;
+  let [name, email, title, content] = param;
+  //확인
+  console.log('name', name);
+  console.log('email', email);
+  console.log('title', title);
+  console.log('content', content);
+  if (!email || !title || !content) {
+    return res.status(400).send('Missing required fields');
+  }
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: "m97161@gmail.com",
+      pass: "vplnnhtzuavweknx",
+    },
+  });
+  const mailOptions = { 
+    from : email , 
+    to : "m9716@naver.com" , 
+    subject : title , 
+    text :content , 
+  };
+  await transporter.sendMail ( mailOptions , ( error , info ) => { 
+    if (error){ 
+      console.error ( "이메일 전송 오류: " , error );
+      res.send(error);   
+    } else {
+       console.log ( "이메일 전송: " , info.response );
+      res.send("ok");   } 
+    } );
+      
 });
 
 const req = {
