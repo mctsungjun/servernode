@@ -4,7 +4,6 @@ const session = require('express-session');
 const nodemailer = require ( "nodemailer" );
 const fs = require('fs');
 const path = require('path');
-
 const cors = require('cors');
 //로컬설정
 // let corsOption = {
