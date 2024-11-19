@@ -4,7 +4,10 @@ const session = require('express-session');
 const nodemailer = require ( "nodemailer" );
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
+const bodyParser = require('body-parser');
 const cors = require('cors');
+const kakaoinfo = require('./config');
 //로컬설정
 // let corsOption = {
 //   origin: 'http://localhost:8080', // 허락하는 요청 주소
@@ -288,6 +291,77 @@ app.post('/send-email', async(req,res)=>{
     } );
       
 });
+
+// 카카오페이결제
+app.post('/kakaopay', async(req, res) => {
+  param = req.body.param;
+  let [user,id, name, price, deliver_price, total, total_price] = param;
+  
+  try{
+    const response = await axios.post('https://open-api.kakaopay.com/online/v1/payment/ready', {
+
+          cid: 'TC0ONETIME', // 테스트용 CID
+          partner_order_id: id,
+          partner_user_id: user,
+          item_name:name,
+          quantity:total,
+          
+          total_amount:(total_price + deliver_price),
+          deliver_price:deliver_price,
+          vat_amount: Math.floor((total_price + deliver_price) / 10),
+          tax_free_amount: 0,
+          approval_url: 'https://web-vuedepoytest-m3cudz5w505940d1.sel4.cloudtype.app/kakaosuccess', // Vue 앱의 성공 URL
+          cancel_url: 'https://web-vuedepoytest-m3cudz5w505940d1.sel4.cloudtype.app/payment-cancel',
+          fail_url: 'https://web-vuedepoytest-m3cudz5w505940d1.sel4.cloudtype.app/payment-fail',
+      }, {
+          headers: {
+              'Authorization' : 'SECRET_KEY DEV42B8A4C24E846AA7693A8CE5BE5E9A098CA2A', // REST API 키
+              'Content-Type': 'application/json;charset=UTF-8',
+          },
+      });
+        // 응답 데이터 전송
+        kakaoinfo.tid = response.data.tid;
+        kakaoinfo.partner_order_id = id;
+        kakaoinfo.partner_user_id = user;
+        console.log(response.data);
+        console.log(kakaoinfo.tid);
+        res.json(response.data);
+  }catch (error) {
+    console.error('KakaoPay Error:', error);
+    res.status(500).json({ message: 'Payment preparation failed' });
+}
+});
+
+app.post('/payment/confirm', async (req, res) => {
+const [pg_token]  = req.body.param;
+console.log(pg_token);
+if (!pg_token) {
+    return res.status(400).send('pg_token이 없습니다.');
+}
+
+try {
+    const response = await axios.post('https://open-api.kakaopay.com/online/v1/payment/approve', {
+        tid: kakaoinfo.tid ,
+        partner_order_id: kakaoinfo.partner_order_id,
+        partner_user_id: kakaoinfo.partner_user_id,
+        pg_token: pg_token,
+        cid: 'TC0ONETIME',
+      }, {
+        headers: {
+          Authorization: 'SECRET_KEY DEV42B8A4C24E846AA7693A8CE5BE5E9A098CA2A', // 환경 변수로 관리
+          'Content-Type': 'application/json',
+        },
+      });
+      
+    console.log(kakaoinfo.tid);
+    console.log('카카오페이 승인 응답:', response.data);
+    res.status(200).json(response.data);
+} catch (error) {
+    console.error('카카오페이 승인 실패:', error);
+    res.status(500).send('결제 승인 실패');
+}
+});
+
 
 const req = {
     async db(alias, param = [], where = '') {
