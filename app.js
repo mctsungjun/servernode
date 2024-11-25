@@ -8,12 +8,27 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const kakaoinfo = require('./config');
+const util = require('util');
+const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
+const mime = require('mime-types');
 //로컬설정
 // let corsOption = {
 //   origin: 'http://localhost:8080', // 허락하는 요청 주소
 //   credentials: true, // true로 하면 설정한 내용을 response 헤더에 추가 해줍니다.
 //   optionsSuccessStatus: 200
 // }
+ //파일 저장 설정
+ const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'fileDownload/');
+  },
+  filename:(req, file, cb) => {
+    const sysfile = `${uuidv4()}${path.extname(file.originalname)}`;
+    cb(null, sysfile);
+  }
+});
+const upload = multer({storage});
 
 // 배포시
 let corsOption = {
@@ -363,9 +378,186 @@ try {
 });
 
 
+app.get('/fileDownload/:fileName', (request, res) => {
+  const fName = request.params.fileName;
+  console.log("fileName", fName);
+  const fpath = `${__dirname}/fileDownload/${fName}`;
+  const mimeType = mime.lookup(fpath) ||  'application/octet-stream';
+
+  if (!fs.existsSync(fpath)) {
+    return res.status(404).send('File not found');
+  }
+  res.header('Content-Type', mimeType); // 적정한 MIME 타입 설정
+  // res.header('Content-Disposition', `attachment; filename="${fName}"`); // 다운로드 설정
+
+  const fileStream = fs.createReadStream(fpath); // 파일 읽기 스트림 생성
+  fileStream.pipe(res); // 클라이언트로 파일 스트림 전송
+
+});
+
+// promise와 async/await 방식
+const queryAsync = util.promisify(dbPool.query).bind(dbPool);
+const query = `insert into t_file(orifile,sysfile,psno) values(?,?,?)`;
+const query2 = `select * from serial;`
+app.post('/fileUpload', upload.array('files',3), async(req, res) => {
+  try{
+    let insertResult =''
+    //Query : Serial 조회
+    const serialResult = await queryAsync(query2);
+    console.log('Serial result:', serialResult);
+
+    // Query : 데이타 삽입
+    for (let i = 0; i < req.files.length; i++) {
+              let file = req.files[i];
+        insertResult = await queryAsync(query,[file.originalname,file.filename,serialResult[0].sno]);
+              
+  }
+  console.log('Insert result:', insertResult);
+  res.status(200).send("ok")
+  }catch (err){
+    console.error('Database error:', err);
+    res.status(500).send({ message: 'Error processing request' });
+  }
+});
+app.post('/api/logout', (request, res) =>{
+    request.session.destroy((err) =>{
+        if(err){
+            return request.status(500).send({error: 'Failed to log out'});
+        }
+        res.send('ok');
+    });
+});
+// 게시판수정
+const queryKey = '';
+let psno = '';
+app.post('/boardUpdate', async (req, res) =>{
+  const param = req.body.param;
+  const sno= param.sno;
+  const subject = param.subject;
+  const id = param.id;
+  const doc = param.doc;
+  psno = param.psno;
+  console.log(psno);
+  await req1.db("boardUpdate", [subject, doc, sno]); 
+  
+  
+
+  res.send('ok');
+
+});
+
+
+// 게시판 파일 수정
+app.post('/boardFileUpdate', upload.array('files',3), async (req,res) =>{
+  
+  const files = req.files;
+  
+  console.log(files);
+  if(files.length>=1){
+    for(var i=0; i<files.length;i++){
+      await req1.db("UploadFileName",[psno,files[i].originalname,files[i].filename]);
+  
+    }
+    console.log(files);
+    res.send('ok');     
+
+  }else{
+    return res.send('nodata');
+  }
+});
+// 게시판 파일 삭제
+app.post('/boardDeleteFile', async (req, res) =>{
+  try{
+
+    let files =req.body.param.files;
+    if (files.length <=0 ){
+      return res.send('fail');
+  
+    }else{
+      for (let i=0; i<files.length;i++){
+        const directory = `${__dirname}/fileDownload`;
+        const f = `${directory}/${files[i]}`;
+       if (fs.existsSync(f)) {
+        fs.unlink(f, (err) => {
+          if (err) {
+            console.error(`파일 삭제 중 오류 발생 : ${err.message}`)
+          }else {
+            console.log('파일이 성공적으로 삭제되었습니다.')
+          }
+        })
+       }
+        await req1.db("deleteFileName",[psno,files[i]]);
+        res.send('ok');
+      }
+    }
+  }catch (err){
+    res.status(500).send({
+      error:err
+    });
+  }
+});
+//게시판 글삭제
+app.post('/boardDelete', async (req, res) => {
+  let sno = req.body.param;
+  await req1.db('boardDelete',[sno]);
+  res.send('ok');
+});
+
+//게시판파일 모두삭제
+
+// 게시판 파일 삭제
+app.post('/deleteAllFile', async (req, res) =>{
+  try{
+
+    let info =req.body.param;
+    console.log(info.psno);
+    
+    js = JSON.parse(info.files);
+    console.log(js);
+    if (info.psno != null) {
+      for (let i=0; i<js.length;i++){
+        const directory = `${__dirname}/fileDownload`;
+        console.log(js[i].sysfile)
+        const f = `${directory}/${js[i].sysfile}`;
+       if (fs.existsSync(f)) {
+        fs.unlink(f, (err) => {
+          if (err) {
+            console.error(`파일 삭제 중 오류 발생 : ${err.message}`)
+          }else {
+            console.log('파일이 성공적으로 삭제되었습니다.')
+          }
+        })
+       }
+      }
+      await req1.db("deleteAllFile",[info.psno]);
+      res.send('ok');
+    }
+  }catch (err){
+    res.status(500).send({
+      error:err
+    });
+  }
+});
+
+
 const req = {
     async db(alias, param = [], where = '') {
       return new Promise((resolve, reject) => dbPool.query(sql[alias].query + where, param, (error, rows) => {
+        if (error) {
+          if (error.code != 'ER_DUP_ENTRY')
+            console.log(error);
+          resolve({
+            error
+          });
+        } else resolve(rows);
+      }));
+    }
+  };
+
+
+  const req1 = {
+    async db(queryKey, param = [], where = '') {
+      return new Promise((resolve, reject) => dbPool.query(sql[queryKey].query + where, param, (error, rows) => {
         if (error) {
           if (error.code != 'ER_DUP_ENTRY')
             console.log(error);

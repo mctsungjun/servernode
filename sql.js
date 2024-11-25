@@ -46,8 +46,44 @@ module.exports = {
     categoryList: {
         query: `select * from t_category;`
     },
-    imageDelete: {
-        query: `delete from t_image where product_id=? and path=?;`
+    boardList: {
+        query: `SELECT sno, hit, nal, id, doc, psno, grp, seq, deep,  CONCAT(LPAD('└', deep * 3, '  '), ' ', subject) AS subject FROM t_board order by psno desc, grp asc;`
+    },
+    boardCount: {
+        query: `SELECT COUNT(*) as count FROM t_board`
+    },
+    boardAdd: {
+        query: `insert into t_board(id, subject, doc,psno) values(?,?,?,getSerial('i'))`
+    },
+    boardFileSno: {
+        query: `select * from t_board where ?`
+    },
+    boardFile: {
+        query: `select sysfile,orifile from t_file where ?`
+    },
+    searchWord: {
+        query: `select * from t_board where subject like ? or doc like ?;`
+    },
+    boardUpdate: {
+        query: `update t_board set subject = ?, doc = ? where sno=?`
+    },
+    deleteFileName: {
+         query: `delete from t_file where psno = ? and sysfile= ?;`
+    },
+    UploadFileName: {
+        query: `insert into t_file(psno,orifile, sysfile ) values(?,?,?)`
+    },
+    boardDelete:{
+        query: `delete from t_board where sno =?`
+    },
+    deleteAllFile: {
+        query: `delete from t_file where psno =?`
+    },
+    addHit: {
+        query: `update t_board set hit=hit+1 where sno=?`
+    },
+    boardRep: {
+        query:`insert into t_board(id, subject, doc,psno, seq,deep,grp) values(?,?,?,?,?,?,?)` 
     }
 
 }
