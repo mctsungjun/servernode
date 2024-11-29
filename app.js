@@ -171,7 +171,7 @@ app.post('/upload/:productId/:type/:fileName', async (request, res) => {
     } = request.params;
     console.log("filename",fileName)
     const filepath = `${__dirname}/uploads/${productId}/${fileName}`;
-    res.header('Content-Type', `image/${fileName.substring(fileName.lastIndexOf("."))}`);
+    res.header('Content-Type', `image/${fileName.substring(fileName.lastIndexOf(".")+1)}`);
     if (!fs.existsSync(filepath)) res.send(404, {
       error: 'Can not found file.'
     });
