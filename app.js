@@ -66,22 +66,23 @@ app.use(session({
     secret: 'secret code',
     resave: false,
     saveUninitialized: false,
-    //로컬설정
-    cookie: {
-        secure: false,
-        maxAge: 1000 * 60 * 60 //쿠키 유효시간 1시간
-    }
+    // //로컬설정
+    // cookie: {
+    //     secure: false,
+    //     maxAge: 1000 * 60 * 60 //쿠키 유효시간 1시간
+    // }
     //배포시
-//     cookie: {
-//         secure: process.env.NODE_ENV === 'production', // 환경에 따라 secure 설정 (배포 시 HTTPS 사용)
-//         maxAge: 1000 * 60 * 60 // 1시간
-//       }
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // 환경에 따라 secure 설정 (배포 시 HTTPS 사용)
+        maxAge: 1000 * 60 * 60 // 1시간
+      }
 }));
 //이미지를 서버에서 제공하려면 Express에서 정적 파일 경로를 설정해야 합니다
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
 // 바디로 요청할때 웹서버에서 받을려면 
 app.use(express.json({
-    limit: '5mb'
+    limit: '5mb',
+    extended:false
 }));
 
 
