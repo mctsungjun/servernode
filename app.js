@@ -135,80 +135,80 @@ app.post('/api/login', async (request, res) =>{
 
 app.post('/upload/:productId/:type/:fileName', async (request, res) => {
 
-    let {
-      productId,
-      type,
-      fileName
-    } = request.params;
-    const dir = `${__dirname}/uploads/${productId}`;
-    const file = `${dir}/${fileName}`;
-    if (!request.body.data) return fs.unlink(file, async (err) => res.send({
-      err
-    }));
-    const data = request.body.data.slice(request.body.data.indexOf(';base64,') + 8);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    fs.writeFile(file, data, 'base64', async (error) => {
-      await req.db('productImageInsert', [{
-        product_id: productId,
-        p_type: type,
-        path: fileName
-      }]);
-  
-      if (error) {
-        res.send({
-          error
-        });
-      } else {
-        res.send("ok");
-      }
-    });
+  let {
+    productId,
+    type,
+    fileName
+  } = request.params;
+  const dir = `${__dirname}/uploads/${productId}`;
+  const file = `${dir}/${fileName}`;
+  if (!request.body.data) return fs.unlink(file, async (err) => res.send({
+    err
+  }));
+  const data = request.body.data.slice(request.body.data.indexOf(';base64,') + 8);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+  fs.writeFile(file, data, 'base64', async (error) => {
+    await req.db('productImageInsert', [{
+      product_id: productId,
+      p_type: type,
+      path: fileName
+    }]);
+
+    if (error) {
+      res.send({
+        error
+      });
+    } else {
+      res.send("ok");
+    }
   });
+});
   
+  // app.get('/download/:productId/:fileName', (request, res) => {
+  //   const {
+  //     productId,
+  //     type,
+  //     fileName
+  //   } = request.params;
+  //   console.log("filename",fileName)
+  //   const filepath = `${__dirname}/uploads/${productId}/${fileName}`;
+  //   res.header('Content-Type', `image/${fileName.substring(fileName.lastIndexOf(".")+1)}`);
+  //   if (!fs.existsSync(filepath)) res.send(404, {
+  //     error: 'Can not found file.'
+  //   });
+  //   else fs.createReadStream(filepath).pipe(res);
+  // });
+
+
+  //코드 개선
   app.get('/download/:productId/:fileName', (request, res) => {
-    const {
-      productId,
-      type,
-      fileName
-    } = request.params;
-    console.log("filename",fileName)
-    const filepath = `${__dirname}/uploads/${productId}/${fileName}`;
-    res.header('Content-Type', `image/${fileName.substring(fileName.lastIndexOf(".")+1)}`);
-    if (!fs.existsSync(filepath)) res.send(404, {
-      error: 'Can not found file.'
-    });
-    else fs.createReadStream(filepath).pipe(res);
-  });
+    const { productId, fileName } = request.params;
+    console.log("filename:", fileName);
 
+    // 파일 경로 생성
+    const filepath = path.join(__dirname, 'uploads', productId, fileName);
+    console.log("filepath", filepath);
+    // 파일 존재 여부 확인
+    if (!fs.existsSync(filepath)) {
+        return res.status(404).json({
+            error: 'Cannot find file.'
+        });
+    }
+    // 캐싱 비활성화 헤더 추가
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');        
+    // 파일 확장자로 MIME 타입 설정
+    const fileExt = path.extname(fileName).substring(1); // 확장자 추출
+    const mimeType = `image/${fileExt}`;
 
-//   //코드 개선
-//   app.get('/download/:productId/:fileName', (request, res) => {
-//     const { productId, fileName } = request.params;
-//     console.log("filename:", fileName);
+    // 적절한 Content-Type 설정
+    res.setHeader('Content-Type', mimeType);
 
-//     // 파일 경로 생성
-//     const filepath = path.join(__dirname, 'uploads', productId, fileName);
-//     console.log("filepath", filepath);
-//     // 파일 존재 여부 확인
-//     if (!fs.existsSync(filepath)) {
-//         return res.status(404).json({
-//             error: 'Cannot find file.'
-//         });
-//     }
-//     // 캐싱 비활성화 헤더 추가
-//     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-//     res.setHeader('Pragma', 'no-cache');
-//     res.setHeader('Expires', '0');
-//     res.setHeader('Surrogate-Control', 'no-store');        
-//     // 파일 확장자로 MIME 타입 설정
-//     const fileExt = path.extname(fileName).substring(1); // 확장자 추출
-//     const mimeType = `image/${fileExt}`;
-
-//     // 적절한 Content-Type 설정
-//     res.setHeader('Content-Type', mimeType);
-
-//     // 파일 스트리밍으로 응답
-//     fs.createReadStream(filepath).pipe(res);
-// });
+    // 파일 스트리밍으로 응답
+    fs.createReadStream(filepath).pipe(res);
+});
 
 
 app.post('/api/logout', (request, res) =>{
