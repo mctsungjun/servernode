@@ -79,6 +79,7 @@ app.use(session({
 }));
 //이미지를 서버에서 제공하려면 Express에서 정적 파일 경로를 설정해야 합니다
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
+// app.use('/fileDownload', express.static(path.join(__dirname, 'fileDownload'))); 
 // 바디로 요청할때 웹서버에서 받을려면 
 app.use(express.json({
     limit: '5mb',
@@ -98,10 +99,7 @@ const db = {
 const dbPool = require('mysql').createPool(db);
 
 
-//로컬에서
-// const server = app.listen(3000, () => {
-//     console.log('Server started. port 3000.');
-// });
+
 
 const server = app.listen(3000, () => {
     console.log('Server started. port 3000.');
